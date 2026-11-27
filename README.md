@@ -1,4 +1,4 @@
-# Family Football Pool
+# Family Pick It
 
 A standalone family betting pool: game odds, pick'em, prop bets, head-to-head challenges, playoff bracket and standings.
 Data lives in the Supabase project `family-pool`. Static site, no build step.

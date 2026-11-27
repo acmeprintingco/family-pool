@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Family Football Pool</title>
+<title>Family Pick It</title>
 <link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0a1f13">
 <link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-180.png">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="Family Pool">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="Family Pick It">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -104,6 +104,7 @@ label{display:grid;gap:4px;font-size:15px;font-weight:600}
 .whobar label{font-weight:700}.whobar select{width:auto;flex:1;max-width:280px}
 .mp{font:800 20px "Saira Condensed",sans-serif;white-space:nowrap}
 .gate{max-width:420px;margin:24px auto;text-align:center}.gate form{margin-top:12px}.gate input{text-align:center;font-size:24px;letter-spacing:.3em}
+.brand{margin:0 0 6px;font:800 15px/1 "Saira Condensed",sans-serif;letter-spacing:.06em;color:var(--acc)}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10;max-width:90vw}
 #toast.on{opacity:1}
 @media(max-width:700px){nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;padding-bottom:12px;gap:6px}nav button{border-radius:10px;background:rgba(0,0,0,.25);padding:10px 6px;font-size:16px}nav button[aria-selected=true]{background:var(--acc);color:#fff}}
@@ -119,7 +120,7 @@ label{display:grid;gap:4px;font-size:15px;font-weight:600}
   <circle cx="110" cy="110" r="96" fill="url(#bbg)"/><g stroke="#2a1206" stroke-width="5" fill="none" stroke-linecap="round"><path d="M110 14V206M14 110H206"/><path d="M44 40C84 80 84 140 44 180"/><path d="M176 40C136 80 136 140 176 180"/></g>
   <ellipse cx="80" cy="66" rx="30" ry="16" fill="rgba(255,255,255,.18)" transform="rotate(-30 80 66)"/></svg>
  <div class="top">
-  <div><h1 id="pname">Family Football Pool</h1>
+  <div><p class="brand">Family Pick It</p><h1 id="pname">Family Football Pool</h1>
 </div>
   <div class="stats"><div class="stat"><small>The pot</small><b id="pot">$0</b></div><div class="stat"><small>Leader</small><b id="leader">—</b></div><div class="stat"><small>Your points</small><b id="mine">—</b></div></div>
  </div>
@@ -180,7 +181,7 @@ label{display:grid;gap:4px;font-size:15px;font-weight:600}
 {
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const DEF={name:'Family Football Pool',buyIn:20,start:1000,pickBonus:50};
+const DEF={name:'Family Pick It',buyIn:20,start:1000,pickBonus:50};
 const COLS=['players','games','bets','picks','props','duels','brackets'];
 const S={settings:{},players:[],games:[],bets:[],picks:[],props:[],duels:[],brackets:[],bracket:{}};
 let db=null,me='',tab='games',slip=null,loaded=false,settingsFilled=false,bView='',admin=false,adminHash=null,adminLoaded=false;
@@ -251,7 +252,7 @@ function render(){
  const c=cfg(),st=standings();
  const d=new Date(),mm=d.getMonth(),auto=(mm===2||(mm===3&&d.getDate()<=10))?'basketball':'football';
  const sp=c.sport==='football'||c.sport==='basketball'?c.sport:auto;if($('#hdr').dataset.sport!==sp)$('#hdr').dataset.sport=sp;
- $('#pname').textContent=c.name;document.title=c.name;
+ $('#pname').textContent=c.name;document.title=c.name+' · Family Pick It';
  $('#pot').textContent='$'+n((+c.buyIn||0)*S.players.length);
  $('#leader').textContent=st.length&&st[0].total!==+c.start?st[0].name:'—';
  const m=st.find(s=>s.id===me);$('#mine').textContent=m?n(m.avail):'—';$('#mine2').textContent=m?n(m.avail)+' pts available':'';
