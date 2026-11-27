@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Family Football Pool</title>
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#0a1f13">
+<link rel="icon" href="/icon-192.png"><link rel="apple-touch-icon" href="/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="Family Pool">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: game-day fun, but as clear as a real sportsbook board
+   IDEA: a turf field header over a betting board of tappable odds
+   PICTURE: the live game board itself, odds as big tappable tiles
+   COLOUR and TYPE: turf green, chalk white, pylon orange; Saira Condensed numbers + Source Sans 3
+   LAYOUT: turf band (pool, pot, leader, who-am-I), tab row, cards in one column, two when wide */
+:root{color-scheme:light dark;--bg:light-dark(#f7f8f5,#0d1410);--card:light-dark(#fff,#16201a);--ink:light-dark(#14201a,#eef3ee);--mute:light-dark(#5d6b62,#9fb0a5);--line:light-dark(#dfe5e0,#26332b);--turf:light-dark(#1d5c3a,#164a2e);--turf2:light-dark(#236b44,#1a5535);--acc:#ff6a13;--acc-ink:#fff;--win:light-dark(#11803f,#4cd483);--lose:light-dark(#c0322b,#ff7a70)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Source Sans 3",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,.num{font-family:"Saira Condensed",system-ui,sans-serif;letter-spacing:.01em}
+h1{font-size:clamp(32px,6vw,48px);line-height:1.05;margin:0;font-weight:800;text-wrap:balance}
+h2{font-size:28px;margin:0 0 12px;font-weight:800}h3{font-size:22px;margin:0 0 4px;font-weight:600;line-height:1.15}
+.turf{position:relative;overflow:hidden;color:#fff;padding:clamp(20px,4vw,40px) max(5vw,16px) 0;border-bottom:4px solid var(--acc);
+ background:radial-gradient(ellipse at 82% 40%,rgba(255,255,255,.10),transparent 45%),repeating-linear-gradient(90deg,transparent 0 calc(10% - 1px),rgba(255,255,255,.07) calc(10% - 1px) 10%),linear-gradient(135deg,#0a1f13 0%,#123a24 55%,#1a5434 100%)}
+.turf[data-sport=basketball]{background:radial-gradient(circle at 84% 50%,transparent 0 118px,rgba(255,255,255,.13) 118px 121px,transparent 121px),linear-gradient(90deg,transparent calc(84% - 1px),rgba(255,255,255,.10) calc(84% - 1px) calc(84% + 1px),transparent calc(84% + 1px)),radial-gradient(ellipse at 80% 40%,rgba(255,138,61,.22),transparent 50%),linear-gradient(135deg,#0c1530 0%,#162650 60%,#22356b 100%)}
+.turf>*{position:relative;z-index:1}
+.turf .art{position:absolute;z-index:0;right:max(3vw,8px);top:50%;transform:translateY(-58%);width:clamp(150px,26vw,280px);height:auto;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45));pointer-events:none}
+.turf .art.bb{display:none}.turf[data-sport=basketball] .art.fb{display:none}.turf[data-sport=basketball] .art.bb{display:block}
+.turf .art.fb{animation:spin 1.2s cubic-bezier(.2,.8,.2,1)}.turf .art.bb{animation:bounce 1s cubic-bezier(.3,1.4,.5,1)}
+@keyframes spin{from{transform:translateY(-58%) translateX(60px) rotate(40deg);opacity:0}}
+@keyframes bounce{from{transform:translateY(-110%);opacity:0}}
+@media (prefers-reduced-motion:reduce){.turf .art{animation:none!important}}
+@media(min-width:701px){.turf .top,.turf nav{padding-right:clamp(150px,26vw,290px)}}
+@media(max-width:700px){.turf .art{width:130px;opacity:.35;top:24px;transform:none}@keyframes spin{from{opacity:0}}@keyframes bounce{from{opacity:0}}}
+.top{max-width:1240px;margin:0 auto;display:grid;gap:18px;grid-template-columns:minmax(0,1fr) auto;align-items:end}
+.stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat{background:rgba(0,0,0,.28);border-radius:12px;padding:10px 16px;min-width:110px}
+.stat small{display:block;font-size:13px;opacity:.85}.stat b{font:800 30px/1.05 "Saira Condensed",sans-serif;white-space:nowrap}
+.who{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.who label{font-weight:600}
+select,input,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+
+textarea{min-height:96px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+nav{max-width:1240px;margin:18px auto 0;display:flex;gap:4px;overflow-x:auto}
+nav button{flex:none;background:transparent;color:#fff;border:0;font:600 17px "Source Sans 3",sans-serif;padding:12px 16px;min-height:44px;border-radius:10px 10px 0 0;cursor:pointer;opacity:.85}
+nav button[aria-selected=true]{background:var(--bg);color:var(--ink);opacity:1}
+main{max-width:1240px;margin:0 auto;padding:24px max(5vw,16px) 64px}
+.pane{display:none}.pane.on{display:block}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.head{display:flex;justify-content:space-between;gap:10px;align-items:start;margin-bottom:12px}
+.muted{color:var(--mute);font-size:15px;margin:0}
+.chip{font-size:13px;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap;background:var(--line)}
+.chip.open{background:var(--win);color:var(--card)}.chip.final{background:var(--ink);color:var(--card)}
+.mk{font-size:13px;font-weight:700;color:var(--mute);margin:12px 0 6px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.odd{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 16px "Source Sans 3",sans-serif;cursor:pointer;text-align:left}
+.odd b{font:800 19px "Saira Condensed",sans-serif;color:var(--turf);white-space:nowrap}
+:root[data-theme=dark] .odd b{color:var(--win)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .odd b{color:var(--win)}}
+.odd:hover:not(:disabled){border-color:var(--acc)}.odd:disabled{opacity:.5;cursor:default}
+.odd.mine{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--card))}
+.score{font:800 40px/1 "Saira Condensed",sans-serif;display:flex;gap:14px;align-items:baseline;margin:6px 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{font-size:14px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px 8px}
+.won{color:var(--win);font-weight:700}.lost{color:var(--lose);font-weight:700}.push,.pending{color:var(--mute);font-weight:700}
+.btn,.primary,.ghost{font:700 16px "Source Sans 3",sans-serif;min-height:44px;padding:10px 16px;border-radius:10px;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.primary{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.sm{min-height:40px;padding:6px 12px;font-size:15px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.board .r{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.rank{font:800 28px "Saira Condensed",sans-serif;color:var(--mute)}.r:first-child .rank{color:var(--acc)}
+.bar{height:8px;border-radius:9px;background:var(--line);margin-top:6px}.bar i{display:block;height:100%;border-radius:9px;background:var(--turf2)}
+.pts{text-align:right;font:800 30px/1 "Saira Condensed",sans-serif;white-space:nowrap}.pts small{display:block;font:400 13px "Source Sans 3",sans-serif;color:var(--mute)}
+.list .it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+form{display:grid;gap:12px}
+.f2{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+label{display:grid;gap:4px;font-size:15px;font-weight:600}
+.hint{font-size:14px;color:var(--mute);font-weight:400}
+.empty{text-align:center;padding:40px 16px;border:2px dashed var(--line);border-radius:16px;color:var(--mute)}
+.empty b{display:block;color:var(--ink);font-size:20px}
+.note{background:color-mix(in srgb,var(--acc) 16%,var(--card));border-radius:12px;padding:12px 16px;margin-bottom:16px}
+.note:empty{display:none}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:end;justify-content:center;z-index:9;padding:12px}
+#sheet.on{display:flex}
+#box{background:var(--card);border-radius:18px;padding:22px;width:min(520px,100%);max-height:88vh;overflow:auto;display:grid;gap:14px;animation:up .2s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#box{animation:none}}
+@media (min-width:700px){#sheet{align-items:center}}
+.towin{font:800 26px "Saira Condensed",sans-serif;color:var(--win)}
+.bk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.rd h4{margin:0 0 8px;font-size:14px;color:var(--mute)}
+.gm{display:grid;gap:6px;margin-bottom:12px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.gm .odd{background:var(--card);min-height:44px}.gm .odd b{font-size:15px;color:var(--mute)}
+.gm .tbd{font-size:14px;color:var(--mute);padding:10px 12px}
+.odd.ok{border-color:var(--win);box-shadow:inset 4px 0 0 var(--win)}.odd.bad span{text-decoration:line-through;opacity:.6}
+.bye{font-size:14px;color:var(--mute);margin:0 0 12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px}
+.sb{max-width:520px;margin:16px auto 0;text-align:center}
+.seeds{display:grid;gap:6px}.seeds label{grid-template-columns:28px minmax(0,1fr);align-items:center}
+.chk{display:flex;gap:10px;align-items:center}.chk input{width:22px;min-height:22px}
+@media(max-width:700px){.bk{grid-template-columns:1fr}}
+.whobar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px max(5vw,16px);background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.whobar label{font-weight:700}.whobar select{width:auto;flex:1;max-width:280px}
+.mp{font:800 20px "Saira Condensed",sans-serif;white-space:nowrap}
+.gate{max-width:420px;margin:24px auto;text-align:center}.gate form{margin-top:12px}.gate input{text-align:center;font-size:24px;letter-spacing:.3em}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 18px;border-radius:10px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10;max-width:90vw}
+#toast.on{opacity:1}
+@media(max-width:700px){nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;padding-bottom:12px;gap:6px}nav button{border-radius:10px;background:rgba(0,0,0,.25);padding:10px 6px;font-size:16px}nav button[aria-selected=true]{background:var(--acc);color:#fff}}
+@media(max-width:600px){.top{grid-template-columns:1fr}.stat{flex:1;min-width:0}.stat b{font-size:24px}}
+</style></head><body>
+<header class="turf" id="hdr" data-sport="football">
+ <svg class="art fb" viewBox="0 0 260 180" aria-hidden="true"><defs><radialGradient id="lea" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#b8682f"/><stop offset=".55" stop-color="#7a3a16"/><stop offset="1" stop-color="#3d1807"/></radialGradient></defs>
+  <g transform="rotate(-24 130 90)"><path d="M18 90C55 20 205 20 242 90C205 160 55 160 18 90Z" fill="url(#lea)"/>
+  <path d="M58 46C50 66 50 114 58 134M202 46C210 66 210 114 202 134" stroke="#f4efe6" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M90 90H170" stroke="#f4efe6" stroke-width="5" stroke-linecap="round"/><path d="M98 80v20M112 80v20M126 80v20M140 80v20M154 80v20" stroke="#f4efe6" stroke-width="5" stroke-linecap="round"/>
+  <path d="M40 70C80 35 180 35 220 70" stroke="rgba(255,255,255,.18)" stroke-width="4" fill="none" stroke-linecap="round"/></g></svg>
+ <svg class="art bb" viewBox="0 0 220 220" aria-hidden="true"><defs><radialGradient id="bbg" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ffa15c"/><stop offset=".6" stop-color="#e8621f"/><stop offset="1" stop-color="#9c3a0c"/></radialGradient></defs>
+  <circle cx="110" cy="110" r="96" fill="url(#bbg)"/><g stroke="#2a1206" stroke-width="5" fill="none" stroke-linecap="round"><path d="M110 14V206M14 110H206"/><path d="M44 40C84 80 84 140 44 180"/><path d="M176 40C136 80 136 140 176 180"/></g>
+  <ellipse cx="80" cy="66" rx="30" ry="16" fill="rgba(255,255,255,.18)" transform="rotate(-30 80 66)"/></svg>
+ <div class="top">
+  <div><h1 id="pname">Family Football Pool</h1>
+</div>
+  <div class="stats"><div class="stat"><small>The pot</small><b id="pot">$0</b></div><div class="stat"><small>Leader</small><b id="leader">—</b></div><div class="stat"><small>Your points</small><b id="mine">—</b></div></div>
+ </div>
+ <nav role="tablist">
+  <button data-tab="games" aria-selected="true">Games</button><button data-tab="sides">Side bets</button><button data-tab="bracket">Bracket</button><button data-tab="standings">Standings</button><button data-tab="bets">All bets</button><button data-tab="setup">Admin</button>
+ </nav>
+</header>
+<div class="whobar"><label for="who">Playing as</label><select id="who"><option value="">Pick your name…</option></select><span id="mine2" class="mp"></span><button class="btn sm" data-act="signout" id="signout" hidden>Sign out</button></div>
+<main>
+ <div class="note" id="note"></div>
+ <section class="pane on" id="p-games"><div class="grid" id="games"></div></section>
+ <section class="pane" id="p-sides">
+  <div class="head"><h2>Prop bets</h2></div><div class="grid" id="props"></div>
+  <div class="head" style="margin-top:32px"><h2>Head-to-head challenges</h2><button class="primary" data-act="newduel">Challenge someone</button></div>
+  <div class="card list" id="duels"></div>
+ </section>
+ <section class="pane" id="p-bracket">
+  <div class="head"><div><h2>Playoff bracket</h2><p class="muted" id="bInfo"></p></div><select id="bView" style="width:auto" aria-label="Whose bracket"></select></div>
+  <div id="bracket"></div>
+ </section>
+ <section class="pane" id="p-standings"><div class="card board"><h2>Standings</h2><p class="muted" id="potline"></p><div id="board"></div></div></section>
+ <section class="pane" id="p-bets"><div class="card"><div class="head"><h2>All bets</h2><select id="filter" style="width:auto"><option value="">Everyone</option></select></div><h3 style="margin-top:8px">Point bets</h3><div class="list" id="betlist"></div><h3 style="margin-top:24px">Pick'em picks</h3><div class="list" id="picklist"></div></div></section>
+ <section class="pane" id="p-setup"><div id="gate"></div><div class="grid" id="setupBody" hidden>
+  <div class="card" style="grid-column:1/-1"><div class="head"><h2>Admin</h2><button class="btn sm" data-act="adminlock">Lock admin</button></div><form id="fPin" class="row" style="display:flex"><input id="pinNew" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" style="width:auto;flex:1" autocomplete="new-password"><button class="btn">Change PIN</button></form></div>
+  <div class="card"><h2>Pool settings</h2><form id="fSettings">
+   <label>Pool name<input id="sName" maxlength="60"></label>
+   <div class="f2"><label>Buy-in ($)<input id="sBuy" type="number" min="0" step="1" inputmode="numeric"></label><label>Starting points<input id="sStart" type="number" min="1" step="1" inputmode="numeric"></label><label>Pick'em bonus<input id="sBonus" type="number" min="0" step="1" inputmode="numeric"></label></div>
+   <label>Header look<select id="sSport"><option value="auto">Automatic by season (basketball in March)</option><option value="football">Football</option><option value="basketball">Basketball</option></select></label>
+   <p class="hint">Everyone starts with the same points. Most points at the end takes the pot.</p>
+   <button class="primary">Save settings</button></form></div>
+  <div class="card"><h2>Players</h2><form id="fPlayer"><div class="row" style="flex-wrap:nowrap"><input id="plName" placeholder="Name, e.g. Uncle Ray" maxlength="40"><button class="primary">Add</button></div></form><div class="list" id="setupPlayers"></div></div>
+  <div class="card"><h2>Add a game</h2><form id="fGame">
+   <div class="f2"><label>Away team<input id="gAway" maxlength="30" placeholder="Giants"></label><label>Home team<input id="gHome" maxlength="30" placeholder="Cowboys"></label></div>
+   <label>Kickoff<input id="gKick" type="datetime-local"></label>
+   <div class="f2"><label>Home spread<input id="gSpread" type="number" step="0.5" placeholder="-3.5"></label><label>Over/under<input id="gTotal" type="number" step="0.5" placeholder="44.5"></label></div>
+   <div class="f2"><label>Away moneyline<input id="gAML" type="number" step="5" placeholder="+150"></label><label>Home moneyline<input id="gHML" type="number" step="5" placeholder="-170"></label></div>
+   <p class="hint">Negative spread = home team favored. Spread and over/under pay −110. Leave any line blank to skip that bet type.</p>
+   <button class="primary">Add game</button></form></div>
+  <div class="card"><h2>Manage games</h2><p class="hint">Lock a game at kickoff so no new bets come in. Enter the final score to pay everyone out.</p><div class="list" id="setupGames"></div></div>
+  <div class="card"><h2>Add a prop bet</h2><form id="fProp">
+   <label>Question<input id="prQ" maxlength="100" placeholder="Will Grandpa fall asleep before halftime?"></label>
+   <label>Options and odds <span class="hint">One per line: answer, odds</span><textarea id="prO" placeholder="Yes, -200&#10;No, +160"></textarea></label>
+   <button class="primary">Add prop</button></form></div>
+  <div class="card"><h2>Manage props &amp; challenges</h2><div class="list" id="setupProps"></div></div>
+  <div class="card" style="grid-column:1/-1"><h2>Playoff bracket</h2><form id="fBracket">
+   <p class="hint">Enter each conference's 7 playoff seeds. #1 gets a bye; Wild Card is 2v7, 3v6, 4v5; the #1 seed then plays the lowest seed left.</p>
+   <div class="f2"><div class="seeds" id="seedsA"><b>AFC</b></div><div class="seeds" id="seedsN"><b>NFC</b></div></div>
+   <div class="f2"><label>Wild Card win<input id="bpWc" type="number" min="0" step="1" inputmode="numeric"></label><label>Divisional win<input id="bpDiv" type="number" min="0" step="1" inputmode="numeric"></label><label>Conference win<input id="bpConf" type="number" min="0" step="1" inputmode="numeric"></label><label>Super Bowl winner<input id="bpSb" type="number" min="0" step="1" inputmode="numeric"></label></div>
+   <label class="chk"><input type="checkbox" id="bLock"> Lock brackets (no more changes to picks)</label>
+   <p class="hint">Enter real winners on the Bracket tab under “Official results.” Points are added to each person's total.</p>
+   <button class="primary">Save bracket setup</button></form></div>
+ </div></section>
+</main>
+<div id="sheet"><div id="box" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<script src="/supabase.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DEF={name:'Family Football Pool',buyIn:20,start:1000,pickBonus:50};
+const COLS=['players','games','bets','picks','props','duels','brackets'];
+const S={settings:{},players:[],games:[],bets:[],picks:[],props:[],duels:[],brackets:[],bracket:{}};
+let db=null,me='',tab='games',slip=null,loaded=false,settingsFilled=false,bView='',admin=false,adminHash=null,adminLoaded=false;
+const CONF=['afc','nfc'],WC=[[2,7],[3,6],[4,5]],BPDEF={wc:10,div:20,conf:40,sb:80};
+const bpts=()=>({...BPDEF,...(S.bracket.points||{})});
+const seedsOk=()=>CONF.every(c=>Array.isArray(S.bracket[c])&&S.bracket[c].filter(Boolean).length===7);
+const tname=(c,s)=>(S.bracket[c]||[])[s-1]||`${c.toUpperCase()} #${s}`;
+function rounds(p){p=p||{};const w=(p.wc||[]).filter(Boolean);let div=null,conf=null;
+ if(w.length===3){const r=[...w].sort((a,b)=>a-b);div=[[1,r[2]],[r[0],r[1]]]}
+ const d=p.div||[];if(div&&d[0]&&d[1])conf=[[d[0],d[1]].sort((a,b)=>a-b)];return {wc:WC,div,conf}}
+function cleanB(b){b=JSON.parse(JSON.stringify(b||{}));
+ for(const c of CONF){const p=b[c]=b[c]||{};p.wc=[0,1,2].map(i=>WC[i].includes((p.wc||[])[i])?p.wc[i]:null);
+  let R=rounds(p);p.div=[0,1].map(i=>R.div&&R.div[i].includes((p.div||[])[i])?p.div[i]:null);
+  R=rounds(p);p.conf=R.conf&&R.conf[0].includes(p.conf)?p.conf:null}
+ if(b.sb){const [c,s]=String(b.sb).split(':');if(!CONF.includes(c)||b[c].conf!==+s)b.sb=null}else b.sb=null;
+ return b}
+function winSets(b){const o={wc:[],div:[],conf:[],sb:[]};if(!b)return o;
+ for(const c of CONF){const p=b[c]||{};(p.wc||[]).forEach(s=>s&&o.wc.push(c+':'+s));(p.div||[]).forEach(s=>s&&o.div.push(c+':'+s));if(p.conf)o.conf.push(c+':'+p.conf)}
+ if(b.sb)o.sb.push(b.sb);return o}
+function outSet(){const r=cleanB(S.bracket.results),out=new Set();
+ for(const c of CONF){const p=r[c],R=rounds(p);
+  const lose=(g,w)=>{if(w)g.forEach(s=>s!==w&&out.add(c+':'+s))};
+  R.wc.forEach((g,i)=>lose(g,p.wc[i]));R.div&&R.div.forEach((g,i)=>lose(g,p.div[i]));R.conf&&lose(R.conf[0],p.conf)}
+ if(r.sb&&r.afc.conf&&r.nfc.conf)['afc:'+r.afc.conf,'nfc:'+r.nfc.conf].forEach(k=>k!==r.sb&&out.add(k));
+ return out}
+function bracketScore(pid){if(!seedsOk())return 0;const b=S.brackets.find(x=>x.id===pid);if(!b)return 0;
+ const mine=winSets(cleanB(b)),off=winSets(cleanB(S.bracket.results)),P=bpts();
+ return ['wc','div','conf','sb'].reduce((t,r)=>t+mine[r].filter(k=>off[r].includes(k)).length*(+P[r]||0),0)}
+let meOk='',adminPin='',adminExists=null,pinOwners=new Set();
+try{me=localStorage.getItem('pool.me')||'';meOk=localStorage.getItem('pool.meOk')||'';adminPin=sessionStorage.getItem('pool.adminPin')||''}catch(e){}
+if(meOk!==me)me='';
+const cfg=()=>({...DEF,...S.settings});
+const fmtO=o=>(o>0?'+':'')+o;
+const fmtL=l=>l>0?'+'+l:(l===0?'PK':String(l));
+const n=v=>Number(v).toLocaleString();
+const profit=(st,o)=>Math.round(o>0?st*o/100:st*100/Math.abs(o));
+const pname=id=>(S.players.find(p=>p.id===id)||{}).name||'Removed player';
+const has=v=>v!==null&&v!==undefined&&v!==''&&!isNaN(v);
+const kick=s=>{if(!s)return '';const d=new Date(s);return isNaN(d)?'':d.toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600)};
+const note=m=>{$('#note').textContent=m};
+const empty=(a,b)=>`<div class="empty" style="grid-column:1/-1"><b>${esc(a)}</b>${esc(b)}</div>`;
+
+function betResult(b){
+ if(b.market==='prop'){const p=S.props.find(x=>x.id===b.propId);if(!p)return 'push';if(p.status!=='settled')return 'pending';if(p.result===-1)return 'push';return p.result===b.opt?'won':'lost'}
+ const g=S.games.find(x=>x.id===b.gameId);if(!g)return 'push';if(g.status!=='final')return 'pending';
+ const h=+g.homeScore,a=+g.awayScore,d=b.pick==='home'?h-a:a-h;let m;
+ if(b.market==='ml')m=d;else if(b.market==='spread')m=d+b.line;else m=b.pick==='over'?(h+a)-b.line:b.line-(h+a);
+ return m>0?'won':m<0?'lost':'push';
+}
+function standings(){
+ const c=cfg();
+ return S.players.map(p=>{
+  let avail=+c.start,inPlay=0,w=0,l=0,pk=0;
+  for(const b of S.bets)if(b.playerId===p.id){const r=betResult(b);
+   if(r==='pending'){avail-=b.stake;inPlay+=b.stake}else if(r==='won'){avail+=profit(b.stake,b.odds);w++}else if(r==='lost'){avail-=b.stake;l++}}
+  for(const k of S.picks)if(k.playerId===p.id){const g=S.games.find(x=>x.id===k.gameId);
+   if(g&&g.status==='final'){const h=+g.homeScore,a=+g.awayScore,win=h>a?'home':a>h?'away':'';if(win&&k.pick===win){avail+=+c.pickBonus;pk++}}}
+  for(const d of S.duels)if(d.a===p.id||d.b===p.id){const side=d.a===p.id?'a':'b';
+   if(!d.winner){avail-=d.stake;inPlay+=d.stake}else if(d.winner===side){avail+=d.stake;w++}else if(d.winner!=='push'){avail-=d.stake;l++}}
+  const bp=bracketScore(p.id);avail+=bp;
+  return {...p,avail,inPlay,total:avail+inPlay,w,l,pk,bp};
+ }).sort((x,y)=>y.total-x.total||x.name.localeCompare(y.name));
+}
+const availOf=id=>(standings().find(s=>s.id===id)||{avail:0}).avail;
+
+function render(){
+ const c=cfg(),st=standings();
+ const d=new Date(),mm=d.getMonth(),auto=(mm===2||(mm===3&&d.getDate()<=10))?'basketball':'football';
+ const sp=c.sport==='football'||c.sport==='basketball'?c.sport:auto;if($('#hdr').dataset.sport!==sp)$('#hdr').dataset.sport=sp;
+ $('#pname').textContent=c.name;document.title=c.name;
+ $('#pot').textContent='$'+n((+c.buyIn||0)*S.players.length);
+ $('#leader').textContent=st.length&&st[0].total!==+c.start?st[0].name:'—';
+ const m=st.find(s=>s.id===me);$('#mine').textContent=m?n(m.avail):'—';$('#mine2').textContent=m?n(m.avail)+' pts available':'';
+ const opts=S.players.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+ const who=$('#who');who.innerHTML='<option value="">Pick your name…</option>'+opts;who.value=S.players.some(p=>p.id===me)?me:'';$('#signout').hidden=!who.value;
+ const f=$('#filter'),fv=f.value;f.innerHTML='<option value="">Everyone</option>'+opts;f.value=S.players.some(p=>p.id===fv)?fv:'';
+ if(!settingsFilled&&loaded){fillSettings();settingsFilled=true}
+ renderGames();renderSides();renderBracket();renderBoard(st);renderBets();renderSetup();
+}
+function renderBracket(){
+ const el=$('#bracket'),sel=$('#bView'),P=bpts();
+ if(!S.players.some(p=>p.id===bView)&&bView!=='official')bView=S.players.some(p=>p.id===me)?me:'official';
+ sel.innerHTML=S.players.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.id===me?' (you)':''}</option>`).join('')+'<option value="official">Official results</option>';
+ sel.value=bView;
+ $('#bInfo').textContent=`${P.wc} / ${P.div} / ${P.conf} / ${P.sb} points per correct winner by round${S.bracket.locked?' · Picks locked':''}`;
+ if(!seedsOk()){el.innerHTML=empty('Bracket not set up yet','Enter the AFC and NFC playoff seeds in Setup.');return}
+ const off=bView==='official',data=cleanB(off?S.bracket.results:S.brackets.find(x=>x.id===bView)),
+  edit=(off&&admin)||(!off&&bView===me&&!S.bracket.locked),out=off?new Set():outSet(),ow=winSets(cleanB(S.bracket.results));
+ const team=(c,s,rd,gi,pick)=>{const k=c+':'+s,mine=pick===s,cls=mine?(!off&&ow[rd].includes(k)?' mine ok':!off&&out.has(k)?' mine bad':' mine'):'';
+  return `<button class="odd${cls}" ${edit?'':'disabled'} data-act="bpick" data-id="${c}|${rd}|${gi}|${s}"><span>${esc(tname(c,s))}</span><b>#${s}</b></button>`};
+ const game=(c,rd,gi,g,pick)=>`<div class="gm">${g?g.map(s=>team(c,s,rd,gi,pick)).join(''):'<div class="tbd">Waiting on earlier picks</div>'}</div>`;
+ const conf=c=>{const p=data[c],R=rounds(p);
+  return `<article class="card"><h3>${c.toUpperCase()}</h3><div class="bk">
+   <div class="rd"><h4>Wild Card</h4><p class="bye">${esc(tname(c,1))} #1 — bye</p>${R.wc.map((g,i)=>game(c,'wc',i,g,p.wc[i])).join('')}</div>
+   <div class="rd"><h4>Divisional</h4>${[0,1].map(i=>game(c,'div',i,R.div&&R.div[i],p.div[i])).join('')}</div>
+   <div class="rd"><h4>Conference title</h4>${game(c,'conf',0,R.conf&&R.conf[0],p.conf)}</div></div></article>`};
+ const champs=CONF.map(c=>data[c].conf).every(Boolean);
+ const sbBtn=c=>{const s=data[c].conf,k=c+':'+s,mine=data.sb===k,cls=mine?(!off&&ow.sb.includes(k)?' mine ok':!off&&out.has(k)?' mine bad':' mine'):'';
+  return `<button class="odd${cls}" ${edit?'':'disabled'} data-act="bpick" data-id="sb|sb|0|${k}"><span>${esc(tname(c,s))}</span><b>${c.toUpperCase()}</b></button>`};
+ const who=off?'Official results':(S.players.find(p=>p.id===bView)||{}).name;
+ el.innerHTML=`<p class="muted" style="margin-bottom:12px">${esc(who)}${off?(admin?' — tap the real winners as games finish.':' — unlock Admin to enter results.'):` · ${n(bracketScore(bView))} bracket pts so far${edit?' · tap a team to pick it':''}`}</p>
+ <div class="grid">${conf('afc')}${conf('nfc')}</div>
+ <article class="card sb"><h3>Super Bowl</h3>${champs?`<div class="gm">${sbBtn('afc')}${sbBtn('nfc')}</div>`:'<div class="gm"><div class="tbd">Pick both conference champions first</div></div>'}</article>`;
+}
+function oddBtn(attr,label,odds,open,mine){return `<button class="odd${mine?' mine':''}" ${open?'':'disabled'} ${attr}><span>${esc(label)}</span><b>${esc(odds)}</b></button>`}
+function renderGames(){
+ const el=$('#games');
+ if(!S.games.length){el.innerHTML=empty('No games on the board yet',loaded?'Add this week’s matchups in Setup.':'Loading…');return}
+ const gs=[...S.games].sort((a,b)=>String(a.kickoff||'').localeCompare(String(b.kickoff||'')));
+ el.innerHTML=gs.map(g=>{
+  const open=gOpen(g),fin=g.status==='final',id=esc(g.id);
+  const b=(mk,pk,label,o)=>oddBtn(`data-act="bet" data-id="${id}|${mk}|${pk}"`,label,fmtO(o),open);
+  let rows='';
+  if(has(g.spread))rows+=`<div class="mk">Spread</div><div class="pair">${b('spread','away',g.away+' '+fmtL(-g.spread),-110)}${b('spread','home',g.home+' '+fmtL(+g.spread),-110)}</div>`;
+  if(has(g.awayML)&&has(g.homeML))rows+=`<div class="mk">Moneyline (straight up)</div><div class="pair">${b('ml','away',g.away,+g.awayML)}${b('ml','home',g.home,+g.homeML)}</div>`;
+  if(has(g.total))rows+=`<div class="mk">Over/under</div><div class="pair">${b('total','over','Over '+g.total,-110)}${b('total','under','Under '+g.total,-110)}</div>`;
+  const myPick=(S.picks.find(k=>k.playerId===me&&k.gameId===g.id)||{}).pick;
+  const cnt=s=>S.picks.filter(k=>k.gameId===g.id&&k.pick===s&&S.players.some(p=>p.id===k.playerId)).length;
+  rows+=`<div class="mk">Free pick'em · +${esc(cfg().pickBonus)} pts if right</div><div class="pair">${['away','home'].map(s=>oddBtn(`data-act="pick" data-id="${id}|${s}"`,g[s],cnt(s)+' picked',open,myPick===s)).join('')}</div>`;
+  rows+=pickLine(g);
+  const gb=S.bets.filter(x=>x.gameId===g.id&&S.players.some(p=>p.id===x.playerId));
+  const tags=gb.map(x=>{const r=betResult(x);return `<span class="tag">${esc(pname(x.playerId))}: ${esc(x.label)} · ${n(x.stake)} <span class="${r}">${r==='pending'?'':r}</span></span>`}).join('');
+  return `<article class="card"><div class="head"><div><h3>${esc(g.away)} @ ${esc(g.home)}</h3><p class="muted">${esc(kick(g.kickoff))}</p></div><span class="chip ${esc(g.status)}">${fin?'Final':open?'Open':'Locked'}</span></div>
+  ${fin?`<div class="score"><span>${esc(g.away)} ${esc(g.awayScore)}</span><span class="muted">–</span><span>${esc(g.home)} ${esc(g.homeScore)}</span></div>`:''}
+  ${rows}${tags?`<div class="tags">${tags}</div>`:''}</article>`;
+ }).join('');
+}
+const started=g=>{if(!g||!g.kickoff)return false;const t=new Date(g.kickoff).getTime();return !isNaN(t)&&Date.now()>=t};
+const gOpen=g=>g.status==='open'&&(g.lateOk||!started(g));
+function gWin(g){if(g.status!=='final')return '';const h=+g.homeScore,a=+g.awayScore;return h>a?'home':a>h?'away':'tie'}
+function pickLine(g,only){
+ const w=gWin(g),ps=S.players.filter(p=>!only||p.id===only);
+ const side=s=>{const who=ps.filter(p=>S.picks.some(k=>k.playerId===p.id&&k.gameId===g.id&&k.pick===s));
+  return who.length?`<span class="tag"><b>${esc(g[s])}:</b> ${who.map(p=>esc(p.name)).join(', ')}${w?` <span class="${w===s?'won':'lost'}">${w===s?'✓ +'+esc(cfg().pickBonus):'✗'}</span>`:''}</span>`:''};
+ const none=ps.filter(p=>!S.picks.some(k=>k.playerId===p.id&&k.gameId===g.id));
+ return `<div class="tags">${side('away')}${side('home')}${none.length?`<span class="tag muted">No pick: ${none.map(p=>esc(p.name)).join(', ')}</span>`:''}</div>`}
+function renderSides(){
+ const el=$('#props');
+ el.innerHTML=S.props.length?S.props.map(p=>{
+  const open=p.status==='open',id=esc(p.id);
+  const opts=(p.options||[]).map((o,i)=>oddBtn(`data-act="pbet" data-id="${id}|${i}"`,o.label+(p.status==='settled'&&p.result===i?' ✓':''),fmtO(o.odds),open)).join('');
+  const pb=S.bets.filter(x=>x.propId===p.id&&S.players.some(q=>q.id===x.playerId));
+  const tags=pb.map(x=>{const r=betResult(x);return `<span class="tag">${esc(pname(x.playerId))}: ${esc((p.options[x.opt]||{}).label)} · ${n(x.stake)} <span class="${r}">${r==='pending'?'':r}</span></span>`}).join('');
+  return `<article class="card"><div class="head"><h3>${esc(p.question)}</h3><span class="chip ${open?'open':p.status==='settled'?'final':''}">${open?'Open':p.status==='settled'?(p.result===-1?'Void':'Settled'):'Locked'}</span></div><div class="pair">${opts}</div>${tags?`<div class="tags">${tags}</div>`:''}</article>`;
+ }).join(''):empty('No prop bets yet','Add fun ones in Setup — first touchdown, who carves the turkey, anything.');
+ const ds=[...S.duels].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ $('#duels').innerHTML=ds.length?ds.map(d=>{
+  const res=!d.winner?'<span class="chip">Pending</span>':d.winner==='push'?'<span class="chip">Push</span>':`<span class="chip open">${esc(pname(d[d.winner]))} won</span>`;
+  return `<div class="it"><div><b>${esc(pname(d.a))} vs ${esc(pname(d.b))}</b> · ${n(d.stake)} pts<p class="muted">${esc(d.terms)}</p></div>${res}</div>`}).join(''):'<p class="muted">No challenges yet. Call someone out!</p>';
+}
+function renderBoard(st){
+ const c=cfg();$('#potline').textContent=`Winner takes $${n((+c.buyIn||0)*S.players.length)} · everyone started with ${n(c.start)} points`;
+ const max=Math.max(1,...st.map(s=>s.total));
+ $('#board').innerHTML=st.length?st.map((s,i)=>`<div class="r"><span class="rank">${i+1}</span><div><b>${esc(s.name)}</b><p class="muted">${s.w}–${s.l} on bets · ${s.pk} pick'em right${seedsOk()?` · ${n(s.bp)} bracket pts`:''}${s.inPlay?` · ${n(s.inPlay)} in play`:''}</p><div class="bar"><i style="width:${Math.max(2,s.total/max*100)}%"></i></div></div><div class="pts">${n(s.total)}<small>points</small></div></div>`).join(''):empty('No players yet','Add your family in Setup.');
+}
+function renderBets(){
+ const f=$('#filter').value;
+ const bs=S.bets.filter(b=>S.players.some(p=>p.id===b.playerId)&&(!f||b.playerId===f)).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ const gs=[...S.games].sort((a,b)=>String(a.kickoff||'').localeCompare(String(b.kickoff||'')));
+ $('#picklist').innerHTML=gs.length&&S.players.length?gs.map(g=>`<div class="it" style="grid-template-columns:1fr"><div><b>${esc(g.away)} @ ${esc(g.home)}</b>${pickLine(g,f)}</div></div>`).join(''):'<p class="muted">No games or players yet.</p>';
+ $('#betlist').innerHTML=bs.length?bs.map(b=>{
+  const r=betResult(b),src=b.market==='prop'?S.props.find(p=>p.id===b.propId):S.games.find(g=>g.id===b.gameId);
+  const canDel=r==='pending'&&src&&(b.market==='prop'?src.status==='open':gOpen(src));
+  const out=r==='won'?`+${n(profit(b.stake,b.odds))}`:r==='lost'?`−${n(b.stake)}`:r==='push'?'refund':`to win ${n(profit(b.stake,b.odds))}`;
+  return `<div class="it"><div><b>${esc(pname(b.playerId))}</b> · ${esc(b.label)} (${esc(fmtO(b.odds))})<p class="muted">${n(b.stake)} pts · <span class="${r}">${out}</span></p></div>${canDel?`<button class="btn sm" data-act="delbet" data-id="${esc(b.id)}">Cancel</button>`:`<span class="${r}">${r==='pending'?'Locked':r[0].toUpperCase()+r.slice(1)}</span>`}</div>`}).join(''):'<p class="muted">No bets yet.</p>';
+}
+const pinMsg=r=>({wrong:'Wrong PIN.',locked:'Too many wrong tries — wait 5 minutes.',bad:'Use 4 to 8 digits.',none:'No PIN is set yet.'}[r]||'Something went wrong, try again.');
+async function rpc(fn,args){const {data,error}=await sb.rpc(fn,args||{});if(error)throw error;return data}
+function renderGate(){
+ $('#setupBody').hidden=!admin;const g=$('#gate');
+ if(admin){g.innerHTML='';g.dataset.mode='';return}
+ if(adminExists===null){if(g.dataset.mode!=='load'){g.dataset.mode='load';g.innerHTML='<p class="muted">Loading…</p>'}return}
+ const fresh=!adminExists;if(g.dataset.mode===(fresh?'new':'pin'))return;g.dataset.mode=fresh?'new':'pin';
+ g.innerHTML=`<div class="card gate"><h2>${fresh?'Create an admin PIN':'Admin PIN'}</h2><p class="muted">${fresh?'Only people with this PIN can add players and games, lock games, enter scores and settle bets.':'Enter the PIN to manage players, games, scores and payouts.'}</p>
+ <form id="fGate"><input id="pinIn" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="off" aria-label="PIN">${fresh?'<input id="pinIn2" type="password" inputmode="numeric" maxlength="8" placeholder="Type it again" autocomplete="off" aria-label="Confirm PIN">':''}<button class="primary">${fresh?'Set PIN':'Unlock'}</button></form></div>`}
+document.addEventListener('submit',async e=>{if(e.target.id!=='fGate')return;e.preventDefault();
+ const p=$('#pinIn').value.trim();if(!/^\d{4,8}$/.test(p))return toast('Use 4 to 8 digits.');
+ try{
+  if(!adminExists){if($('#pinIn2')&&$('#pinIn2').value.trim()!==p)return toast('The PINs don’t match.');
+   const r=await rpc('pool_set_pin',{p_kind:'admin',p_owner:'admin',p_old:null,p_new:p});if(r!=='ok')return toast(r==='wrong'?'An admin PIN was already set — enter it instead.':pinMsg(r));adminExists=true;toast('Admin PIN set')}
+  else{const r=await rpc('pool_check_pin',{p_kind:'admin',p_owner:'admin',p_pin:p});if(r!=='ok'){$('#pinIn').value='';return toast(pinMsg(r))}}
+ }catch(x){return toast('Couldn’t reach the server.')}
+ admin=true;adminPin=p;try{sessionStorage.setItem('pool.adminPin',p)}catch(x){}fillSettings();render()});
+function renderSetup(){
+ renderGate();
+ $('#setupPlayers').innerHTML=S.players.map(p=>`<div class="it"><span>${esc(p.name)}${pinOwners.has(p.id)?'':' <span class="muted">· no PIN yet</span>'}</span><div class="row">${pinOwners.has(p.id)?`<button class="btn sm" data-act="resetpin" data-id="${esc(p.id)}">Reset PIN</button>`:''}<button class="btn sm" data-act="delplayer" data-id="${esc(p.id)}">Remove</button></div></div>`).join('')||'<p class="muted">No players yet.</p>';
+ $('#setupGames').innerHTML=S.games.map(g=>{const id=esc(g.id);return `<div class="it"><div><b>${esc(g.away)} @ ${esc(g.home)}</b><p class="muted">${g.status==='final'?`Final ${esc(g.awayScore)}–${esc(g.homeScore)}`:gOpen(g)?'Open for bets · locks at kickoff':'Locked'}</p></div><div class="row">
+  ${gOpen(g)?`<button class="btn sm" data-act="lock" data-id="${id}">Lock</button>`:`<button class="btn sm" data-act="reopen" data-id="${id}">Reopen</button>`}<button class="btn sm" data-act="final" data-id="${id}">Score</button><button class="btn sm" data-act="delgame" data-id="${id}">Delete</button></div></div>`}).join('')||'<p class="muted">No games yet.</p>';
+ const pr=S.props.map(p=>{const id=esc(p.id);return `<div class="it"><div><b>${esc(p.question)}</b><p class="muted">${p.status==='settled'?'Settled':p.status==='open'?'Open':'Locked'}</p></div><div class="row">${p.status==='open'?`<button class="btn sm" data-act="plock" data-id="${id}">Lock</button>`:`<button class="btn sm" data-act="preopen" data-id="${id}">Reopen</button>`}<button class="btn sm" data-act="psettle" data-id="${id}">Settle</button><button class="btn sm" data-act="delprop" data-id="${id}">Delete</button></div></div>`});
+ const du=S.duels.map(d=>{const id=esc(d.id);return `<div class="it"><div><b>${esc(pname(d.a))} vs ${esc(pname(d.b))}</b><p class="muted">${esc(d.terms)}</p></div><div class="row"><button class="btn sm" data-act="dsettle" data-id="${id}">Settle</button><button class="btn sm" data-act="delduel" data-id="${id}">Delete</button></div></div>`});
+ $('#setupProps').innerHTML=pr.concat(du).join('')||'<p class="muted">Nothing to manage yet.</p>';
+}
+function fillSettings(){const c=cfg();$('#sName').value=c.name;$('#sBuy').value=c.buyIn;$('#sStart').value=c.start;$('#sBonus').value=c.pickBonus;$('#sSport').value=c.sport||'auto';
+ const B=S.bracket,P=bpts();for(let i=1;i<=7;i++){$('#bA'+i).value=(B.afc||[])[i-1]||'';$('#bN'+i).value=(B.nfc||[])[i-1]||''}
+ $('#bpWc').value=P.wc;$('#bpDiv').value=P.div;$('#bpConf').value=P.conf;$('#bpSb').value=P.sb;$('#bLock').checked=!!B.locked}
+for(const [box,pre] of [['#seedsA','bA'],['#seedsN','bN']])$(box).insertAdjacentHTML('beforeend',[1,2,3,4,5,6,7].map(i=>`<label><span>#${i}</span><input id="${pre}${i}" maxlength="30" aria-label="Seed ${i}"></label>`).join(''));
+
+function sheet(html){$('#box').innerHTML=html;$('#sheet').classList.add('on');const i=$('#box input,#box select');if(i)i.focus()}
+function closeSheet(){$('#sheet').classList.remove('on');slip=null}
+async function save(fn,ok){
+ if(!db){toast('Open this page signed in to Claude to save.');return false}
+ try{await fn();if(ok)toast(ok);return true}
+ catch(e){toast(e&&e.code==='invalid_argument'?'You don’t have permission to change this pool.':e&&e.code==='quota_exceeded'?'The pool is full — delete old games or bets.':'Couldn’t save, try again.');return false}
+}
+function needMe(){if(me&&meOk===me&&S.players.some(p=>p.id===me))return true;toast('Pick your name at the top first.');$('#who').focus();return false}
+
+function openSlip(s){
+ if(!needMe())return;
+ const av=availOf(me);slip=s;
+ sheet(`<h3>${esc(s.title)}</h3><p class="muted">${esc(s.label)} at ${esc(fmtO(s.odds))} · ${esc(pname(me))} has ${n(av)} pts available</p>
+ <label>Stake (points)<input id="stake" type="number" inputmode="numeric" min="1" step="1" max="${av}" value="${Math.max(0,Math.min(50,av))}"></label>
+ <div class="row">${[25,50,100].map(v=>`<button class="btn sm" data-act="q" data-id="${v}">${v}</button>`).join('')}<button class="btn sm" data-act="q" data-id="${av}">All in</button></div>
+ <div>To win <span class="towin" id="towin"></span></div>
+ <div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="place">Place bet</button></div>`);
+ updWin();
+}
+function updWin(){const i=$('#stake');if(!i||!slip)return;const v=Math.floor(+i.value)||0;$('#towin').textContent=v>0?n(profit(v,slip.odds))+' pts':'—'}
+
+const A={
+ async bet(v){const [gid,mk,pk]=v.split('|'),g=S.games.find(x=>x.id===gid);if(!g||!gOpen(g))return toast('This game has started — betting is closed.');
+  let label,odds=-110,line=null;
+  if(mk==='spread'){line=pk==='home'?+g.spread:-g.spread;label=`${g[pk]} ${fmtL(line)}`}
+  else if(mk==='ml'){odds=pk==='home'?+g.homeML:+g.awayML;label=`${g[pk]} to win`}
+  else{line=+g.total;label=`${pk==='over'?'Over':'Under'} ${line}`}
+  openSlip({title:`${g.away} @ ${g.home}`,label,odds,doc:{market:mk,pick:pk,line,odds,gameId:gid,label}})},
+ async pbet(v){const [pid,i]=v.split('|'),p=S.props.find(x=>x.id===pid);if(!p||p.status!=='open')return;const o=p.options[+i];
+  openSlip({title:p.question,label:o.label,odds:+o.odds,doc:{market:'prop',propId:pid,opt:+i,odds:+o.odds,label:`${p.question} — ${o.label}`}})},
+ q(v){const i=$('#stake');if(i){i.value=v;updWin()}},
+ async place(){const v=Math.floor(+$('#stake').value),av=availOf(me);
+  if(!(v>0))return toast('Enter how many points to bet.');if(v>av)return toast(`You only have ${n(av)} points available.`);
+  const d={...slip.doc,playerId:me,stake:v,createdAt:Date.now()};
+  if(await save(()=>db.collection('bets').add(d),'Bet placed!'))closeSheet()},
+ async pick(v){if(!needMe())return;const [gid,s]=v.split('|');{const g=S.games.find(x=>x.id===gid);if(!g||!gOpen(g))return toast('This game has started — picks are closed.')}const ref=db&&db.doc(`picks/${me}_${gid}`);
+  const cur=S.picks.find(k=>k.playerId===me&&k.gameId===gid);
+  await save(()=>cur&&cur.pick===s?ref.delete():ref.set({playerId:me,gameId:gid,pick:s}),cur&&cur.pick===s?'Pick cleared':'Pick saved')},
+ delbet(id){save(()=>db.doc('bets/'+id).delete(),'Bet cancelled')},
+ lock(id){save(()=>db.doc('games/'+id).update({status:'locked',lateOk:false}),'Game locked')},
+ reopen(id){const g=S.games.find(x=>x.id===id);save(()=>db.doc('games/'+id).update({status:'open',lateOk:started(g)}),started(g)?'Reopened — open past kickoff until you lock it':'Game reopened')},
+ final(id){const g=S.games.find(x=>x.id===id);if(!g)return;slip={gid:id};
+  sheet(`<h3>Final score</h3><p class="muted">${esc(g.away)} @ ${esc(g.home)}. Saving pays out every bet and pick'em on this game.</p><div class="f2"><label>${esc(g.away)}<input id="sa" type="number" min="0" inputmode="numeric" value="${esc(g.awayScore??'')}"></label><label>${esc(g.home)}<input id="sh" type="number" min="0" inputmode="numeric" value="${esc(g.homeScore??'')}"></label></div><div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="savefinal">Save final</button></div>`)},
+ async savefinal(){const a=$('#sa').value,h=$('#sh').value;if(a===''||h===''||+a<0||+h<0)return toast('Enter both scores.');
+  if(await save(()=>db.doc('games/'+slip.gid).update({status:'final',awayScore:+a,homeScore:+h}),'Final saved — payouts done'))closeSheet()},
+ delgame(id){confirmIt('Delete this game? Any bets on it are refunded.',()=>save(()=>db.doc('games/'+id).delete(),'Game deleted'))},
+ delplayer(id){confirmIt(`Remove ${pname(id)}? Their bets and picks stop counting.`,()=>save(()=>db.doc('players/'+id).delete(),'Player removed'))},
+ plock(id){save(()=>db.doc('props/'+id).update({status:'locked'}),'Prop locked')},
+ preopen(id){save(()=>db.doc('props/'+id).update({status:'open',result:null}),'Prop reopened')},
+ psettle(id){const p=S.props.find(x=>x.id===id);if(!p)return;
+  sheet(`<h3>Settle: ${esc(p.question)}</h3><p class="muted">Which answer won?</p><div class="row">${p.options.map((o,i)=>`<button class="primary" data-act="psetres" data-id="${esc(id)}|${i}">${esc(o.label)}</button>`).join('')}<button class="btn" data-act="psetres" data-id="${esc(id)}|-1">Void (refund all)</button></div><button class="ghost" data-act="close">Cancel</button>`)},
+ async psetres(v){const [id,i]=v.split('|');if(await save(()=>db.doc('props/'+id).update({status:'settled',result:+i}),'Prop settled'))closeSheet()},
+ delprop(id){confirmIt('Delete this prop? Bets on it are refunded.',()=>save(()=>db.doc('props/'+id).delete(),'Prop deleted'))},
+ newduel(){if(!needMe())return;const others=S.players.filter(p=>p.id!==me);if(!others.length)return toast('Add more players first.');
+  sheet(`<h3>Challenge someone</h3><p class="muted">${esc(pname(me))} has ${n(availOf(me))} pts available. Winner takes the stake from the loser.</p>
+  <label>Opponent<select id="dOpp">${others.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></label>
+  <label>The bet<input id="dTerms" maxlength="120" placeholder="Cowboys score more than 30"></label>
+  <label>Stake (points each)<input id="dStake" type="number" min="1" step="1" inputmode="numeric" value="50"></label>
+  <div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="saveduel">Lay down the challenge</button></div>`)},
+ async saveduel(){const b=$('#dOpp').value,t=$('#dTerms').value.trim(),s=Math.floor(+$('#dStake').value);
+  if(!t)return toast('Describe the bet.');if(!(s>0))return toast('Enter a stake.');
+  if(s>availOf(me))return toast('You don’t have that many points available.');if(s>availOf(b))return toast(`${pname(b)} only has ${n(availOf(b))} points available.`);
+  if(await save(()=>db.collection('duels').add({a:me,b,terms:t,stake:s,winner:null,createdAt:Date.now()}),'Challenge on!'))closeSheet()},
+ dsettle(id){const d=S.duels.find(x=>x.id===id);if(!d)return;
+  sheet(`<h3>Settle challenge</h3><p class="muted">${esc(d.terms)} · ${n(d.stake)} pts</p><div class="row"><button class="primary" data-act="dres" data-id="${esc(id)}|a">${esc(pname(d.a))} won</button><button class="primary" data-act="dres" data-id="${esc(id)}|b">${esc(pname(d.b))} won</button><button class="btn" data-act="dres" data-id="${esc(id)}|push">Push</button><button class="btn" data-act="dres" data-id="${esc(id)}|">Not decided</button></div><button class="ghost" data-act="close">Cancel</button>`)},
+ async dres(v){const [id,w]=v.split('|');if(await save(()=>db.doc('duels/'+id).update({winner:w||null}),'Challenge updated'))closeSheet()},
+ delduel(id){confirmIt('Delete this challenge?',()=>save(()=>db.doc('duels/'+id).delete(),'Challenge deleted'))},
+ async bpick(v){const [c,rd,gi,s]=v.split('|'),off=bView==='official';
+  if(off&&!admin)return toast('Unlock Admin with the PIN to enter results.');if(!off){if(!needMe())return;if(bView!==me)return;if(S.bracket.locked)return toast('Brackets are locked.')}
+  const b=cleanB(off?S.bracket.results:S.brackets.find(x=>x.id===me));
+  if(c==='sb')b.sb=b.sb===s?null:s;
+  else if(rd==='conf')b[c].conf=b[c].conf===+s?null:+s;
+  else b[c][rd][+gi]=b[c][rd][+gi]===+s?null:+s;
+  const nb=cleanB(b);
+  if(off)await save(()=>db.doc('bracket/main').update({results:nb}),'Result saved');
+  else await save(()=>db.doc('brackets/'+me).set({...nb,playerId:me}),'Pick saved')},
+ adminlock(){admin=false;adminPin='';try{sessionStorage.removeItem('pool.adminPin')}catch(e){}$('#gate').dataset.mode='';render();toast('Admin locked')},
+ resetpin(id){confirmIt(`Reset ${pname(id)}'s PIN? They'll create a new one next time they pick their name.`,async()=>{try{const r=await rpc('pool_reset_player_pin',{p_admin_pin:adminPin,p_owner:id});if(r!=='ok')return toast(pinMsg(r));pinOwners.delete(id);if(meOk===id){me='';meOk='';store()}render();toast('PIN reset')}catch(e){toast('Couldn’t reach the server.')}})},
+ signout(){me='';meOk='';store();render();toast('Signed out')},
+ async pinok(id){const p=$('#ppin').value.trim();if(!/^\d{4,8}$/.test(p))return toast('Use 4 to 8 digits.');
+  try{const r=await rpc('pool_check_pin',{p_kind:'player',p_owner:id,p_pin:p});if(r!=='ok'){$('#ppin').value='';return toast(pinMsg(r))}}catch(e){return toast('Couldn’t reach the server.')}
+  signIn(id)},
+ async pinnew(id){const p=$('#ppin').value.trim();if(!/^\d{4,8}$/.test(p))return toast('Use 4 to 8 digits.');if($('#ppin2').value.trim()!==p)return toast('The PINs don’t match.');
+  try{const r=await rpc('pool_set_pin',{p_kind:'player',p_owner:id,p_old:null,p_new:p});if(r!=='ok')return toast(r==='wrong'?'Someone already set a PIN for this name.':pinMsg(r))}catch(e){return toast('Couldn’t reach the server.')}
+  pinOwners.add(id);signIn(id);toast('PIN saved — don’t forget it!')},
+ close(){closeSheet()},
+ yes(){const f=slip&&slip.yes;closeSheet();if(f)f()}
+};
+function confirmIt(msg,fn){slip={yes:fn};sheet(`<h3>Are you sure?</h3><p>${esc(msg)}</p><div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="yes">Yes, do it</button></div>`)}
+function setTab(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));if(t==='setup')fillSettings()}
+
+document.addEventListener('click',e=>{
+ const t=e.target.closest('button');
+ if(!t){if(e.target.id==='sheet')closeSheet();return}
+ if(t.dataset.tab)return setTab(t.dataset.tab);
+ const a=t.dataset.act;if(a&&A[a]){e.preventDefault();A[a](t.dataset.id||'')}
+});
+document.addEventListener('input',e=>{if(e.target.id==='stake')updWin()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+function store(){try{localStorage.setItem('pool.me',me);localStorage.setItem('pool.meOk',meOk)}catch(x){}}
+function signIn(id){me=id;meOk=id;store();bView=id;closeSheet();render()}
+$('#who').addEventListener('change',async e=>{const v=e.target.value;e.target.value=S.players.some(p=>p.id===me)?me:'';
+ if(!v){me='';meOk='';store();return render()}
+ if(v===meOk){me=v;store();return render()}
+ let has=pinOwners.has(v);try{has=await rpc('pool_pin_exists',{p_kind:'player',p_owner:v});has?pinOwners.add(v):pinOwners.delete(v)}catch(x){}
+ const nm=esc(pname(v)),id=esc(v);
+ sheet(has?`<h3>Hi ${nm}!</h3><p class="muted">Enter your PIN to play.</p><input id="ppin" type="password" inputmode="numeric" maxlength="8" placeholder="Your PIN" autocomplete="off" aria-label="Your PIN"><p class="hint">Forgot it? Ask whoever runs the pool to reset it in Admin.</p><div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="pinok" data-id="${id}">Let me in</button></div>`
+  :`<h3>Welcome, ${nm}!</h3><p class="muted">Make a 4–8 digit PIN so nobody else can bet as you.</p><input id="ppin" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN" autocomplete="off" aria-label="New PIN"><input id="ppin2" type="password" inputmode="numeric" maxlength="8" placeholder="Type it again" autocomplete="off" aria-label="Confirm PIN"><div class="row"><button class="ghost" data-act="close">Cancel</button><button class="primary" data-act="pinnew" data-id="${id}">Save my PIN</button></div>`)});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='ppin'||e.target.id==='ppin2')){const b=$('#box [data-act=pinok],#box [data-act=pinnew]');if(b)b.click()}});
+$('#filter').addEventListener('change',renderBets);
+$('#fPin').addEventListener('submit',async e=>{e.preventDefault();const p=$('#pinNew').value.trim();if(!/^\d{4,8}$/.test(p))return toast('Use 4 to 8 digits.');
+ try{const r=await rpc('pool_set_pin',{p_kind:'admin',p_owner:'admin',p_old:adminPin,p_new:p});if(r!=='ok')return toast(pinMsg(r));adminPin=p;try{sessionStorage.setItem('pool.adminPin',p)}catch(x){}$('#pinNew').value='';toast('Admin PIN changed')}catch(x){toast('Couldn’t reach the server.')}});
+$('#bView').addEventListener('change',e=>{bView=e.target.value;renderBracket()});
+$('#fBracket').addEventListener('submit',e=>{e.preventDefault();
+ const get=pre=>[1,2,3,4,5,6,7].map(i=>$('#'+pre+i).value.trim());const afc=get('bA'),nfc=get('bN');
+ if(afc.some(x=>!x)||nfc.some(x=>!x))return toast('Fill in all 7 seeds for both conferences.');
+ const pi=id=>Math.max(0,Math.floor(+$(id).value)||0);
+ const d={afc,nfc,points:{wc:pi('#bpWc'),div:pi('#bpDiv'),conf:pi('#bpConf'),sb:pi('#bpSb')},locked:$('#bLock').checked,results:cleanB(S.bracket.results)};
+ save(()=>db.doc('bracket/main').set(d),'Bracket saved')});
+$('#fSettings').addEventListener('submit',e=>{e.preventDefault();
+ const d={name:$('#sName').value.trim()||DEF.name,buyIn:Math.max(0,+$('#sBuy').value||0),start:Math.max(1,Math.floor(+$('#sStart').value)||DEF.start),pickBonus:Math.max(0,Math.floor(+$('#sBonus').value)||0),sport:$('#sSport').value};
+ save(()=>db.doc('settings/pool').set(d),'Settings saved')});
+$('#fPlayer').addEventListener('submit',async e=>{e.preventDefault();const v=$('#plName').value.trim();if(!v)return;
+ if(S.players.some(p=>p.name.toLowerCase()===v.toLowerCase()))return toast('That name is already in.');
+ if(await save(()=>db.collection('players').add({name:v,createdAt:Date.now()}),v+' added'))$('#plName').value=''});
+$('#fGame').addEventListener('submit',async e=>{e.preventDefault();
+ const num=id=>{const v=$(id).value;return v===''?null:Number(v)};
+ const d={away:$('#gAway').value.trim(),home:$('#gHome').value.trim(),kickoff:$('#gKick').value?new Date($('#gKick').value).toISOString():'',spread:num('#gSpread'),total:num('#gTotal'),awayML:num('#gAML'),homeML:num('#gHML'),status:'open',createdAt:Date.now()};
+ if(!d.away||!d.home)return toast('Enter both teams.');
+ for(const k of ['awayML','homeML'])if(d[k]!==null&&Math.abs(d[k])<100)return toast('Moneylines look like +150 or -170.');
+ if((d.awayML===null)!==(d.homeML===null))return toast('Enter both moneylines, or neither.');
+ if(await save(()=>db.collection('games').add(d),'Game added'))e.target.reset()});
+$('#fProp').addEventListener('submit',async e=>{e.preventDefault();const q=$('#prQ').value.trim();
+ const options=$('#prO').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.lastIndexOf(',');return {label:l.slice(0,i).trim(),odds:Number(l.slice(i+1))}});
+ if(!q)return toast('Enter a question.');if(options.length<2)return toast('Add at least two options.');
+ if(options.some(o=>!o.label||!(Math.abs(o.odds)>=100)))return toast('Each line needs an answer and odds, like: Yes, +150');
+ if(await save(()=>db.collection('props').add({question:q,options,status:'open',result:null,createdAt:Date.now()}),'Prop added'))e.target.reset()});
+
+render();
+setInterval(()=>{if(!$('#sheet').classList.contains('on'))render()},30000);
+const SB_URL='https://qmhpnehiieviygiiznjv.supabase.co',SB_KEY='sb_publishable_Pj5GFOFU1ZMQeu5gdv29iA_jW2m0hma';
+let sb=null,ready=false;const cache=new Map(),colL={},docL={};
+const colSnap=c=>({metadata:{fromCache:false},docs:[...cache.entries()].filter(([p])=>p.startsWith(c+'/')).sort((a,b)=>a[0]<b[0]?-1:1).map(([p,d])=>({id:p.slice(c.length+1),exists:true,data:()=>d}))});
+const docSnap=p=>({id:p.split('/')[1],exists:cache.has(p),data:()=>cache.get(p)});
+function notify(p){const c=p.split('/')[0];(colL[c]||[]).forEach(f=>f(colSnap(c)));(docL[p]||[]).forEach(f=>f(docSnap(p)))}
+function notifyAll(){Object.keys(colL).forEach(c=>colL[c].forEach(f=>f(colSnap(c))));Object.keys(docL).forEach(p=>docL[p].forEach(f=>f(docSnap(p))))}
+const rid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,10);
+async function write(p,d){const {error}=await sb.from('pool_docs').upsert({path:p,collection:p.split('/')[0],data:d});if(error)throw error;cache.set(p,d);notify(p)}
+function docRef(p){return {set:d=>write(p,d),
+ update:async d=>{if(!cache.has(p))throw {code:'invalid_argument'};await write(p,{...cache.get(p),...d})},
+ delete:async()=>{const {error}=await sb.from('pool_docs').delete().eq('path',p);if(error)throw error;cache.delete(p);notify(p)},
+ onSnapshot:f=>{(docL[p]=docL[p]||[]).push(f);if(ready)f(docSnap(p));return()=>{}}}}
+const mkDb=()=>({doc:docRef,collection:c=>({doc:id=>docRef(c+'/'+(id||rid())),add:async d=>{const id=rid();await write(c+'/'+id,d);return {id}},
+ onSnapshot:f=>{(colL[c]=colL[c]||[]).push(f);if(ready)f(colSnap(c));return()=>{}}})});
+async function loadAll(){const {data,error}=await sb.from('pool_docs').select('path,data').limit(10000);if(error)throw error;
+ cache.clear();data.forEach(r=>cache.set(r.path,r.data));ready=true;loaded=true;notifyAll();
+ try{pinOwners=new Set(await rpc('pool_pin_owners'));adminExists=await rpc('pool_pin_exists',{p_kind:'admin',p_owner:'admin'})}catch(e){}
+ render()}
+(async()=>{
+ if(!window.supabase){note('Couldn’t load the app. Check your connection and refresh.');return}
+ sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false}});db=mkDb();
+ COLS.forEach(c=>db.collection(c).onSnapshot(s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));render()}));
+ db.doc('bracket/main').onSnapshot(s=>{S.bracket=s.exists?s.data():{};settingsFilled=false;render()});
+ db.doc('settings/pool').onSnapshot(s=>{S.settings=s.exists?s.data():{};settingsFilled=false;render()});
+ const timer=setTimeout(()=>note('Can’t reach the pool right now — check your connection.'),10000);
+ try{await loadAll();clearTimeout(timer);note('')}catch(e){clearTimeout(timer);note('Couldn’t load the pool. Check your connection and refresh.')}
+ if(adminPin){try{if(await rpc('pool_check_pin',{p_kind:'admin',p_owner:'admin',p_pin:adminPin})==='ok'){admin=true;fillSettings()}else{adminPin='';sessionStorage.removeItem('pool.adminPin')}}catch(e){}render()}
+ sb.channel('pool').on('postgres_changes',{event:'*',schema:'public',table:'pool_docs'},pl=>{
+  if(pl.eventType==='DELETE'){const p=pl.old&&pl.old.path;if(p&&cache.has(p)){cache.delete(p);notify(p)}}
+  else if(pl.new&&pl.new.path){cache.set(pl.new.path,pl.new.data);notify(pl.new.path)}
+ }).subscribe(st=>{if(st==='SUBSCRIBED'&&ready)loadAll().catch(()=>{})});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&ready)loadAll().catch(()=>{})});
+})();
+}
+</script>
+</body></html>
